@@ -182,7 +182,7 @@ func defaultConfig() config {
 		General: generalConfig{Editor: ""}, // empty = fall back to $EDITOR, then nvim
 		Digest: digestConfig{
 			StateFile:      filepath.Join(tuiui.HomeDir(), ".local", "state", "tabelaradar", "digest.json"),
-			KanbanBin:      "tabelakanban",
+			KanbanBin:      "tkanban",
 			WaitForNetwork: true,
 			NetworkTimeout: duration{5 * time.Minute},
 			LLM: llmConfig{

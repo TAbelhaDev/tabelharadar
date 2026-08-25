@@ -67,7 +67,7 @@ func (p Project) toIPC() projectJSON {
 	return out
 }
 
-// runIPC implements `tabelaradar ipc <method> [key=value...] --json`, the same
+// runIPC implements `tradar ipc <method> [key=value...] --json`, the same
 // scriptable-data-source convention as dcal/djobs (`<bin> ipc <method>
 // --json`) — meant for an LLM (or any script) to ask "what's left to do,
 // where did I stop, what could I pick up next" across every tracked repo
@@ -75,7 +75,7 @@ func (p Project) toIPC() projectJSON {
 func runIPC(args []string) int {
 	parsed, err := tuiui.ParseIPCArgs(args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "uso: tabelaradar ipc <método> [key=value...] --json")
+		fmt.Fprintln(os.Stderr, "uso: tradar ipc <método> [key=value...] --json")
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}

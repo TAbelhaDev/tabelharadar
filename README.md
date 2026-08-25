@@ -56,12 +56,13 @@ Requires Go 1.26+.
 go install github.com/ianptkcs/tabelaradar@latest
 ```
 
-Or building from source:
+That installs the binary as `tabelaradar` (matching the module name). To get the short `tradar`
+name used throughout this README, build from source instead:
 
 ```bash
 git clone https://github.com/TabelaDev/tabelaradar.git
 cd tabelaradar
-go build -o tabelaradar .
+go build -o tradar .
 ```
 
 ## Layout
@@ -84,9 +85,9 @@ Three panels:
 ## Usage
 
 ```
-tabelaradar         # opens the TUI
-tabelaradar list    # plain-text dump, no TTY — useful for scripting
-tabelaradar digest  # turn recent activity into kanban updates (needs [digest] config)
+tradar         # opens the TUI
+tradar list    # plain-text dump, no TTY — useful for scripting
+tradar digest  # turn recent activity into kanban updates (needs [digest] config)
 ```
 
 Inside the TUI: `↑`/`↓` (or `j`/`k`) move through the project list,
@@ -98,15 +99,15 @@ quits.
 ## IPC
 
 For scripts, or for an LLM to ask "what is left to do, where did I stop in each
-project, what could be started" without opening the TUI, `tabelaradar` exposes a
+project, what could be started" without opening the TUI, `tradar` exposes a
 non-interactive `ipc` subcommand, in the same spirit as
 `dcal ipc <method> --json`/`djobs ipc <method> --json`:
 
 ```bash
-tabelaradar ipc projects.list --json                  # every tracked project, with git status + description + next steps
-tabelaradar ipc projects.list dirty=true --json       # only those with uncommitted changes
-tabelaradar ipc projects.list name=tabelacal --json   # one specific project
-tabelaradar ipc projects.next --json                  # the project tabelaradar itself would prioritise (mid-flight > most recent)
+tradar ipc projects.list --json                  # every tracked project, with git status + description + next steps
+tradar ipc projects.list dirty=true --json       # only those with uncommitted changes
+tradar ipc projects.list name=tabelacal --json   # one specific project
+tradar ipc projects.next --json                  # the project tradar itself would prioritise (mid-flight > most recent)
 ```
 
 Beyond the git status fields (branch, dirty, ahead/behind, last commit), each
@@ -118,7 +119,7 @@ project does not have one yet.
 
 ## Digest
 
-`tabelaradar digest` turns recent project activity into kanban updates — the
+`tradar digest` turns recent project activity into kanban updates — the
 radar's "why". It gathers activity from the mapped projects, asks an LLM for a
 structured plan and applies it to the kanban through its IPC. Nothing lives
 inside the kanban: the board→projects mapping is the radar's own config.
@@ -128,15 +129,15 @@ Flow per run:
 1. gather activity for each `[digest.boards]` project since the last run —
    git commits + current state, the Claude memory index, and (optional, off by
    default) recent opencode sessions via `opencode session list`;
-2. read the current board state with `tabelakanban ipc boards.list`;
+2. read the current board state with `tkanban ipc boards.list`;
 3. ask the configured LLM for a plan: `{"moves":[...],"updates":[...],"creates":[...]}`;
-4. apply it with `tabelakanban ipc cards.move` / `cards.update` / `cards.create`
+4. apply it with `tkanban ipc cards.move` / `cards.update` / `cards.create`
    (or just print it with `--dry-run` / `dry_run = true`).
 
 ```bash
-tabelaradar digest               # apply (requires [digest] with enabled = true)
-tabelaradar digest --dry-run     # print the plan, change nothing
-tabelaradar digest --install-timer  # systemd user timer from [digest].schedule
+tradar digest               # apply (requires [digest] with enabled = true)
+tradar digest --dry-run     # print the plan, change nothing
+tradar digest --install-timer  # systemd user timer from [digest].schedule
 ```
 
 The cursor lives in `state_file` (`~/.local/state/tabelaradar/digest.json` by

@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.0] - 2026-08-25
+
+### Changed
+
+- Renamed the installed binary from `tabelaradar` to `tradar`.
+  `[digest].kanban_bin` now defaults to `tkanban` (tabelakanban's new short
+  name) instead of `tabelakanban` — set `kanban_bin` explicitly in
+  config.toml if your kanban binary hasn't been renamed yet. Usage/help
+  text, the release artifacts and the README updated to match.
+
 ## [v0.3.3] - 2026-08-25
 
 ### Fixed

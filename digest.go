@@ -16,7 +16,7 @@ import (
 	"github.com/ianptkcs/tabelatuiui"
 )
 
-// kanbanBoard mirrors the wire shape `tabelakanban ipc boards.list --json`
+// kanbanBoard mirrors the wire shape `tkanban ipc boards.list --json`
 // returns, so the digest can both show the board to the LLM and validate the
 // LLM's proposed operations against it.
 type kanbanBoard struct {
@@ -68,7 +68,7 @@ type digestState struct {
 	LastRun time.Time `json:"last_run"`
 }
 
-// runDigest implements `tabelaradar digest [flags]`. Flags:
+// runDigest implements `tradar digest [flags]`. Flags:
 //
 //	--install-timer  write + enable the systemd user timer (from [digest].schedule)
 //	--dry-run        force dry-run (never apply, never touch the state file)
@@ -270,7 +270,7 @@ func gatherActivity(board digestBoard, byName map[string]Project, sources []acti
 	return lines
 }
 
-// readKanbanBoard asks `tabelakanban ipc boards.list name=<board> --json` and
+// readKanbanBoard asks `tkanban ipc boards.list name=<board> --json` and
 // returns the first (single) board, or false when the board doesn't exist.
 func readKanbanBoard(name string) (kanbanBoard, bool) {
 	out, err := kanbanIPC("boards.list", "name="+name)
@@ -331,13 +331,13 @@ func findColumnIn(kb kanbanBoard, name string) *struct {
 	return nil
 }
 
-// kanbanIPC runs `tabelakanban ipc <method> <key=value...> --json` and
+// kanbanIPC runs `tkanban ipc <method> <key=value...> --json` and
 // returns the raw JSON stdout. The kanban binary is the digest's plugin
 // boundary — everything the digest writes goes through this one place.
 func kanbanIPC(method string, kv ...string) ([]byte, error) {
 	bin := settings.Digest.KanbanBin
 	if bin == "" {
-		bin = "tabelakanban"
+		bin = "tkanban"
 	}
 	args := append([]string{"ipc", method}, append(append([]string{}, kv...), "--json")...)
 	cmd := exec.Command(bin, args...)
@@ -482,7 +482,7 @@ func ctx() context.Context { return context.Background() }
 
 // waitForNetwork probes github.com until a connection succeeds or the timeout
 // expires — the same guard the user's cron jobs use (wait_for_net), in-process
-// so the timer's ExecStart stays a single `tabelaradar digest` call.
+// so the timer's ExecStart stays a single `tradar digest` call.
 func waitForNetwork(timeout time.Duration) error {
 	if timeout <= 0 {
 		timeout = 5 * time.Minute
@@ -510,8 +510,8 @@ func installDigestTimer() int {
 	cfg := settings.Digest
 	bin, err := os.Executable()
 	if err != nil || bin == "" {
-		if bin, err = exec.LookPath("tabelaradar"); err != nil {
-			fmt.Fprintln(os.Stderr, "erro: não achei o binário do tabelaradar")
+		if bin, err = exec.LookPath("tradar"); err != nil {
+			fmt.Fprintln(os.Stderr, "erro: não achei o binário do tradar")
 			return 1
 		}
 	}
