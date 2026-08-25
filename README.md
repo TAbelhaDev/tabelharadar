@@ -172,11 +172,10 @@ github.com (up to `network_timeout`), and on timeout aborts cleanly without
 advancing the cursor, so the next timer run retries. `--no-wait` skips it for
 an interactive run.
 
-Everything is a dial: `enabled` decides whether an AI runs at all, `dry_run`
-whether it writes, `[digest.llm]` how, `[digest.sources]` what it sees, and
-`[[digest.boards]]` which boards feed which projects. With `enabled` off the
-digest still gathers and prints activity, but never calls an LLM and never
-writes a thing.
+Everything is a dial: `enabled` is the kill switch — with it off, `digest`
+does nothing at all (no scan, no LLM, no write); `dry_run` (only relevant
+once enabled) decides whether it writes, `[digest.llm]` how, `[digest.sources]`
+what it sees, and `[[digest.boards]]` which boards feed which projects.
 
 ## Configuration
 

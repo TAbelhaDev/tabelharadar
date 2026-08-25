@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.3] - 2026-08-25
+
+### Fixed
+
+- `[digest] enabled = false` is now a real kill switch. It previously only
+  forced dry-run (suppressing the kanban write) while still scanning
+  projects and still calling the configured LLM provider; it now skips the
+  scan, network wait, LLM call and write entirely.
+
 ## [v0.3.2] - 2026-08-14
 
 ### Adicionado

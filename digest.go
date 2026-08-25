@@ -86,6 +86,14 @@ func runDigest(args []string) int {
 		}
 	}
 
+	cfg := settings.Digest
+	// Enabled is a full kill switch: with it off, the digest does nothing at
+	// all — no scan, no network wait, no LLM, no write.
+	if !cfg.Enabled {
+		fmt.Println("digest desabilitado (enabled = false em config.toml) — nada foi feito")
+		return 0
+	}
+
 	entries, cfgWarning := loadRootsConfig()
 	projects, warnings := scanAll(entries)
 	if cfgWarning != "" {
@@ -95,7 +103,6 @@ func runDigest(args []string) int {
 		fmt.Fprintln(os.Stderr, "aviso:", w)
 	}
 
-	cfg := settings.Digest
 	// A Persistent timer fires the moment the machine is back — often before
 	// the network is up. Wait for connectivity before doing anything network-
 	// bound; on timeout, abort cleanly so the cursor doesn't advance and the
@@ -107,7 +114,8 @@ func runDigest(args []string) int {
 		}
 	}
 
-	dryRun := cfg.DryRun || forceDryRun || !cfg.Enabled
+	dryRun := cfg.DryRun || forceDryRun
+
 	llm, err := newLLM(cfg.LLM)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "erro:", err)

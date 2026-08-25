@@ -175,10 +175,10 @@ no github.com (até `network_timeout`) e, se a conexão não vier, aborta limpo
 sem avançar o cursor — o próximo timer tenta de novo. `--no-wait` pula a
 espera numa rodada manual.
 
-Tudo é um dial: `enabled` decide se roda IA ou não, `dry_run` se ela escreve,
-`[digest.llm]` como, `[digest.sources]` o que ela enxerga e `[[digest.boards]]`
-quais boards alimentam quais projetos. Com `enabled` off, o digest ainda coleta
-e imprime a atividade, mas nunca chama LLM e nunca escreve nada.
+Tudo é um dial: `enabled` é o botão de desligar — com ele off, `digest` não
+faz nada (sem scan, sem LLM, sem escrita); `dry_run` (só relevante com
+enabled ligado) decide se ela escreve, `[digest.llm]` como, `[digest.sources]`
+o que ela enxerga e `[[digest.boards]]` quais boards alimentam quais projetos.
 
 ## Configuração
 

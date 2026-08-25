@@ -61,16 +61,16 @@ type generalConfig struct {
 }
 
 // digestConfig is the whole `[digest]` section. Enabled defaults to false on
-// purpose — the digest only runs (and only calls any LLM) once the user turns
-// it on and maps at least one board.
+// purpose — the digest only runs at all once the user turns it on and maps
+// at least one board.
 type digestConfig struct {
-	// Enabled turns the AI update on. With it off (the default), `digest`
-	// still gathers activity and prints what it would do — but without
-	// applying anything and without calling any LLM.
+	// Enabled is a full kill switch. With it off (the default), `digest` does
+	// nothing at all — no project scan, no network wait, no LLM call, no
+	// kanban write.
 	Enabled bool `toml:"enabled"`
 	// DryRun prints the planned kanban changes instead of applying them. It
 	// does not bypass the LLM: the digest still asks it to propose moves, it
-	// just refuses to write. With Enabled off, DryRun is forced on.
+	// just refuses to write.
 	DryRun bool `toml:"dry_run"`
 	// StateFile is where the digest keeps its cursor — the last successful
 	// run time, so the next run only gathers what happened since.
