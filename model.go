@@ -41,7 +41,7 @@ const (
 	minRightWidth      = 30
 )
 
-// The sidebar:right-column width ratio and the stats:descrição height ratio
+// The sidebar:right-column width ratio and the stats:description height ratio
 // now live in config.toml ([layout]); normalize keeps every share >= 1 so the
 // divisions below can't hit zero.
 
@@ -247,9 +247,9 @@ func openEditor(path string) tea.Cmd {
 	return tea.ExecProcess(cmd, func(err error) tea.Msg { return editorFinishedMsg{} })
 }
 
-// layout recomputes the sidebar/stats/descrição panel widths and heights so
+// layout recomputes the sidebar/stats/description panel widths and heights so
 // the whole layout always fits exactly within m.height — the stats and
-// descrição panels get a fixed line budget (statsLines/descMaxLines) that
+// description panels get a fixed line budget (statsLines/descMaxLines) that
 // their content is padded or clipped to, instead of growing with whatever
 // text happens to be in them. A panel emitting more lines than its budget
 // is exactly what used to push the sidebar off the top of the screen for
@@ -446,7 +446,7 @@ func (m appModel) renderStats() string {
 	}, "\n")
 }
 
-// currentDescLines is the full (unscrolled, unclipped) descrição text for
+// currentDescLines is the full (unscrolled, unclipped) description text for
 // current(), wrapped to the panel's width and split into lines — shared by
 // renderDescBody, maxDetailScroll, and the title's scroll-position indicator
 // so they never disagree about line count.
@@ -501,7 +501,7 @@ func (m appModel) maxDetailScroll() int {
 }
 
 // renderDescBody clips lines to the panel's fixed descMaxLines budget,
-// starting at detailScroll — this is what actually keeps the descrição
+// starting at detailScroll — this is what actually keeps the description
 // panel's rendered height constant regardless of content length.
 func (m appModel) renderDescBody(lines []string) string {
 	scroll := m.detailScroll

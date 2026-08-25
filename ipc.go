@@ -67,8 +67,8 @@ func (p Project) toIPC() projectJSON {
 	return out
 }
 
-// runIPC implements `tabelaradar ipc <método> [key=value...] --json`, the same
-// scriptable-data-source convention as dcal/djobs (`<bin> ipc <método>
+// runIPC implements `tabelaradar ipc <method> [key=value...] --json`, the same
+// scriptable-data-source convention as dcal/djobs (`<bin> ipc <method>
 // --json`) — meant for an LLM (or any script) to ask "what's left to do,
 // where did I stop, what could I pick up next" across every tracked repo
 // without going through the TUI.
