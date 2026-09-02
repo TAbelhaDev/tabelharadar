@@ -37,14 +37,14 @@ jobs:
           CGO_ENABLED: 0
         run: |
           mkdir -p dist
-          BIN="tradar-${{ matrix.goos }}-${{ matrix.goarch }}"
+          BIN="taradar-${{ matrix.goos }}-${{ matrix.goarch }}"
           go build -o "dist/$BIN" .
           tar -C dist -czf "dist/$BIN.tar.gz" "$BIN"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: tradar-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: taradar-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/*.tar.gz
 
   release:

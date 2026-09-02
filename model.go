@@ -391,7 +391,7 @@ func (m appModel) View() string {
 		return ""
 	}
 
-	header := theme.Header(m.width).Render("TabelaRadar — comissão central de inspeção disciplinar dos seus projetos")
+	header := theme.Header(m.width).Render("TAbelhaRadar — comissão central de inspeção disciplinar dos seus projetos")
 
 	footer := tuiui.NewFooter(reg.Bindings()...).
 		Status(m.status).

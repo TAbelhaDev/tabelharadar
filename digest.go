@@ -68,7 +68,7 @@ type digestState struct {
 	LastRun time.Time `json:"last_run"`
 }
 
-// runDigest implements `tradar digest [flags]`. Flags:
+// runDigest implements `taradar digest [flags]`. Flags:
 //
 //	--install-timer  write + enable the systemd user timer (from [digest].schedule)
 //	--dry-run        force dry-run (never apply, never touch the state file)
@@ -354,7 +354,7 @@ func kanbanIPC(method string, kv ...string) ([]byte, error) {
 // provider for a structured plan.
 func askLLM(ctx context.Context, llm llmProvider, kb kanbanBoard, activity []string) (digestPlan, error) {
 	boardJSON, _ := json.Marshal(compactBoard(kb))
-	system := `Você é o assistente do TabelaDigest, que mantém um kanban atualizado a partir da atividade real dos projetos.
+	system := `Você é o assistente do TAbelhaDigest, que mantém um kanban atualizado a partir da atividade real dos projetos.
 
 Você recebe: (1) o estado atual de um board do kanban em JSON, e (2) a atividade recente dos projetos mapeados a esse board.
 
@@ -482,7 +482,7 @@ func ctx() context.Context { return context.Background() }
 
 // waitForNetwork probes github.com until a connection succeeds or the timeout
 // expires — the same guard the user's cron jobs use (wait_for_net), in-process
-// so the timer's ExecStart stays a single `tradar digest` call.
+// so the timer's ExecStart stays a single `taradar digest` call.
 func waitForNetwork(timeout time.Duration) error {
 	if timeout <= 0 {
 		timeout = 5 * time.Minute
@@ -510,8 +510,8 @@ func installDigestTimer() int {
 	cfg := settings.Digest
 	bin, err := os.Executable()
 	if err != nil || bin == "" {
-		if bin, err = exec.LookPath("tradar"); err != nil {
-			fmt.Fprintln(os.Stderr, "erro: não achei o binário do tradar")
+		if bin, err = exec.LookPath("taradar"); err != nil {
+			fmt.Fprintln(os.Stderr, "erro: não achei o binário do taradar")
 			return 1
 		}
 	}
@@ -522,12 +522,12 @@ func installDigestTimer() int {
 		return 1
 	}
 
-	servicePath := filepath.Join(dir, "tabelaradar-digest.service")
-	timerPath := filepath.Join(dir, "tabelaradar-digest.timer")
+	servicePath := filepath.Join(dir, "tabelharadar-digest.service")
+	timerPath := filepath.Join(dir, "tabelharadar-digest.timer")
 
 	logPath := filepath.Join(filepath.Dir(cfg.StateFile), "digest.log")
 	service := `[Unit]
-Description=tabelaradar digest (kanban auto-update)
+Description=tabelharadar digest (kanban auto-update)
 
 [Service]
 Type=oneshot
@@ -542,7 +542,7 @@ StandardError=append:` + logPath + `
 		persistent = "yes"
 	}
 	timer := `[Unit]
-Description=tabelaradar digest (schedule)
+Description=tabelharadar digest (schedule)
 
 [Timer]
 OnCalendar=` + cfg.Schedule.OnCalendar + `
@@ -563,7 +563,7 @@ WantedBy=timers.target
 
 	for _, args := range [][]string{
 		{"--user", "daemon-reload"},
-		{"--user", "enable", "--now", "tabelaradar-digest.timer"},
+		{"--user", "enable", "--now", "tabelharadar-digest.timer"},
 	} {
 		if out, err := exec.Command("systemctl", args...).CombinedOutput(); err != nil {
 			fmt.Fprintln(os.Stderr, "systemctl:", err, string(out))
@@ -572,6 +572,6 @@ WantedBy=timers.target
 	}
 
 	fmt.Printf("timer instalado: %s (OnCalendar=%s, Persistent=%s)\n", timerPath, cfg.Schedule.OnCalendar, persistent)
-	fmt.Println("veja o estado com: systemctl --user list-timers tabelaradar-digest.timer")
+	fmt.Println("veja o estado com: systemctl --user list-timers tabelharadar-digest.timer")
 	return 0
 }

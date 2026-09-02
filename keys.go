@@ -7,11 +7,11 @@ import (
 	"github.com/ianptkcs/tabelatuiui"
 )
 
-// reg is tabelaradar's single source of truth for keybindings: defaults
-// registered below, overrides persisted to ~/.config/tabelaradar/keybindings.json.
+// reg is tabelharadar's single source of truth for keybindings: defaults
+// registered below, overrides persisted to ~/.config/tabelharadar/keybindings.json.
 // Resolve() returns the effective binding, shared by dispatch, footer and
 // help modal — a user rebind via the settings modal applies to all at once.
-var reg = tuiui.NewKeyRegistry(filepath.Join(tuiui.ConfigDir(), "tabelaradar", "keybindings.json"))
+var reg = tuiui.NewKeyRegistry(filepath.Join(tuiui.ConfigDir(), "tabelharadar", "keybindings.json"))
 
 func init() {
 	reg.RegisterMany(

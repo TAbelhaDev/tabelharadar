@@ -1,15 +1,15 @@
 <div align="center">
 
-# TabelaRadar
+# TAbelhaRadar
 
 **TUI que fiscaliza a saúde git dos seus repositórios locais** — WIP, commits
 não enviados, repos sem remote, projetos parados há tempo demais.
 
 [English](README.md) · **Português**
 
-[![Go Version](https://img.shields.io/github/go-mod/go-version/TabelaDev/tabelaradar?style=flat-square&logo=go&logoColor=white&color=00ADD8)](go.mod)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/TAbelhaDev/tabelharadar?style=flat-square&logo=go&logoColor=white&color=00ADD8)](go.mod)
 [![Built with Bubble Tea](https://img.shields.io/badge/built%20with-Bubble%20Tea-ff69b4?style=flat-square)](https://github.com/charmbracelet/bubbletea)
-[![Powered by tabelatuiui](https://img.shields.io/badge/theme-tabelatuiui-d6b4f7?style=flat-square)](https://github.com/TabelaDev/tabelatuiui)
+[![Powered by tabelatuiui](https://img.shields.io/badge/theme-tabelatuiui-d6b4f7?style=flat-square)](https://github.com/TAbelhaDev/tabelatuiui)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](LICENSE)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/ianptkcs)
@@ -36,7 +36,7 @@ uma sessão já rodou ali dentro.
 
 O tema e o chrome compartilhado (header/footer/panels, padding ANSI-aware, os
 helpers de `ipc ... --json`) vêm da
-[`tabelatuiui`](https://github.com/TabelaDev/tabelatuiui), a lib de UI
+[`tabelatuiui`](https://github.com/TAbelhaDev/tabelatuiui), a lib de UI
 compartilhada dos meus TUIs Bubble Tea.
 
 ## Índice
@@ -54,16 +54,16 @@ compartilhada dos meus TUIs Bubble Tea.
 Requer Go 1.26+.
 
 ```bash
-go install github.com/ianptkcs/tabelaradar@latest
+go install github.com/TAbelhaDev/tabelharadar@latest
 ```
 
-Isso instala o binário como `tabelaradar` (nome do módulo). Pra ter o nome curto
-`tradar` usado no resto deste README, compile a partir do source:
+Isso instala o binário como `tabelharadar` (nome do módulo). Pra ter o nome curto
+`taradar` usado no resto deste README, compile a partir do source:
 
 ```bash
-git clone https://github.com/TabelaDev/tabelaradar.git
-cd tabelaradar
-go build -o tradar .
+git clone https://github.com/TAbelhaDev/tabelharadar.git
+cd tabelharadar
+go build -o taradar .
 ```
 
 ## Layout
@@ -86,9 +86,9 @@ Três painéis:
 ## Uso
 
 ```
-tradar         # abre a TUI
-tradar list    # dump em texto plano, sem TTY — útil pra scriptar
-tradar digest  # vira atividade recente em updates no kanban (precisa de [digest] no config)
+taradar         # abre a TUI
+taradar list    # dump em texto plano, sem TTY — útil pra scriptar
+taradar digest  # vira atividade recente em updates no kanban (precisa de [digest] no config)
 ```
 
 Dentro da TUI: `↑`/`↓` (ou `j`/`k`) navegam a lista de projetos,
@@ -101,14 +101,14 @@ reescaneia, `q` sai.
 
 Pra scripts ou pra um LLM perguntar "o que falta fazer, onde eu parei em
 cada projeto, o que dá pra começar a implementar" sem abrir a TUI,
-`tradar` expõe um subcomando `ipc` não-interativo, no mesmo espírito do
+`taradar` expõe um subcomando `ipc` não-interativo, no mesmo espírito do
 `dcal ipc <método> --json`/`djobs ipc <método> --json`:
 
 ```bash
-tradar ipc projects.list --json                  # todo projeto trackeado, com status git + descrição + próximos passos
-tradar ipc projects.list dirty=true --json       # só quem tem mudanças não commitadas
-tradar ipc projects.list name=tabelacal --json   # um projeto específico
-tradar ipc projects.next --json                  # o projeto que o próprio tradar priorizaria (mid-flight > mais recente)
+taradar ipc projects.list --json                  # todo projeto trackeado, com status git + descrição + próximos passos
+taradar ipc projects.list dirty=true --json       # só quem tem mudanças não commitadas
+taradar ipc projects.list name=tabelhacal --json   # um projeto específico
+taradar ipc projects.next --json                  # o projeto que o próprio taradar priorizaria (mid-flight > mais recente)
 ```
 
 Cada projeto no JSON traz, além dos campos de status git (branch, sujo,
@@ -121,7 +121,7 @@ uma.
 
 ## Digest
 
-`tradar digest` vira atividade recente dos projetos em updates no kanban —
+`taradar digest` vira atividade recente dos projetos em updates no kanban —
 o "pra quê" do radar. Ele coleta a atividade dos projetos mapeados, pede a um
 LLM um plano estruturado e aplica no kanban via IPC. Nada mora dentro do
 kanban: o mapeamento board→projetos é config do próprio radar.
@@ -138,14 +138,14 @@ Fluxo por rodada:
    (ou só imprime com `--dry-run` / `dry_run = true`).
 
 ```bash
-tradar digest                 # aplica (precisa de [digest] com enabled = true)
-tradar digest --dry-run       # imprime o plano, não muda nada
-tradar digest --install-timer # timer systemd de usuário a partir de [digest].schedule
+taradar digest                 # aplica (precisa de [digest] com enabled = true)
+taradar digest --dry-run       # imprime o plano, não muda nada
+taradar digest --install-timer # timer systemd de usuário a partir de [digest].schedule
 ```
 
-O cursor mora em `state_file` (`~/.local/state/tabelaradar/digest.json` por
+O cursor mora em `state_file` (`~/.local/state/tabelharadar/digest.json` por
 default) e só avança numa rodada real, não-dry — assim um preview nunca engole
-atividade. Requer `tabelakanban` ≥ v0.3.0 (o método `ipc cards.update`).
+atividade. Requer `tabelhakanban` ≥ v0.3.0 (o método `ipc cards.update`).
 
 Um `[digest]` mínimo:
 
@@ -164,7 +164,7 @@ claude_memory = true
 
 [[digest.boards]]
 board = "geral"
-projects = ["tabelacal", "tabelafin"]
+projects = ["tabelhacal", "tabelhafin"]
 
 [digest.schedule]       # usado por `digest --install-timer`
 on_calendar = "*-*-* 19:00:00"
@@ -183,8 +183,8 @@ o que ela enxerga e `[[digest.boards]]` quais boards alimentam quais projetos.
 
 ## Configuração
 
-Tudo fica em `~/.config/tabelaradar/config.toml` (sobrescrível via
-`TABELARADAR_CONFIG`). O arquivo é opcional e parcial: só as chaves presentes
+Tudo fica em `~/.config/tabelharadar/config.toml` (sobrescrível via
+`TABELHARADAR_CONFIG`). O arquivo é opcional e parcial: só as chaves presentes
 sobrescrevem, o resto segue no default. `f5` recarrega sem reiniciar.
 
 ```toml
@@ -228,7 +228,7 @@ opencode_sessions = false  # sessões recentes do opencode (via CLI do opencode)
 
 [[digest.boards]]          # repita pra cada board
 board = "geral"
-projects = ["tabelacal", "tabelafin"]
+projects = ["tabelhacal", "tabelhafin"]
 
 [digest.schedule]          # usado por `digest --install-timer`
 on_calendar = "*-*-* 09:00:00"
@@ -247,11 +247,11 @@ persistent  = true
 `exclude` esconde um caminho específico — seja uma raiz inteira, seja um filho
 de uma raiz citada em `roots`. A ordem não importa entre as duas listas.
 
-Sem nenhum arquivo, varre só `TABELARADAR_ROOT` (ou `~/codigo/pessoal`).
+Sem nenhum arquivo, varre só `TABELHARADAR_ROOT` (ou `~/codigo/pessoal`).
 
 ### Migrando do formato antigo
 
-Antes da 0.3.0 a config era `~/.config/tabelaradar/config`, uma entrada por
+Antes da 0.3.0 a config era `~/.config/tabelharadar/config`, uma entrada por
 linha com `!` prefixando exclusões. **Esse arquivo continua sendo lido** quando
 não existe `config.toml`, com um aviso na barra de status. A tradução é direta:
 
@@ -265,12 +265,12 @@ misturam, e o arquivo antigo pode ser apagado.
 
 ### Outras variáveis
 
-- `TABELARADAR_CONFIG` — caminho do `config.toml`, se não for o padrão.
-- `TABELARADAR_ROOT` — diretório varrido quando não existe config nenhuma
+- `TABELHARADAR_CONFIG` — caminho do `config.toml`, se não for o padrão.
+- `TABELHARADAR_ROOT` — diretório varrido quando não existe config nenhuma
   (padrão `~/codigo/pessoal`).
-- `TABELARADAR_ACCENT` — accent Catppuccin Mocha manual, usado só quando o
+- `TABELHARADAR_ACCENT` — accent Catppuccin Mocha manual, usado só quando o
   DankMaterialShell não está instalado/configurado (padrão `mauve`).
-- `TABELARADAR_DMS_SETTINGS` — caminho do `settings.json` do DMS, se não for
+- `TABELHARADAR_DMS_SETTINGS` — caminho do `settings.json` do DMS, se não for
   o padrão.
 
 ## Desenvolvimento

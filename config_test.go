@@ -9,17 +9,17 @@ import (
 )
 
 // configDir points XDG_CONFIG_HOME at a temp dir and returns
-// <tmp>/tabelaradar, where both the legacy "config" and the new "config.toml"
+// <tmp>/tabelharadar, where both the legacy "config" and the new "config.toml"
 // live. It also resets the package-level cfg so each test loads fresh.
 func configDir(t *testing.T) string {
 	t.Helper()
 	base := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", base)
-	t.Setenv("TABELARADAR_CONFIG", "")
-	t.Setenv("TABELARADAR_ROOT", "")
+	t.Setenv("TABELHARADAR_CONFIG", "")
+	t.Setenv("TABELHARADAR_ROOT", "")
 	settings = defaultConfig()
 
-	dir := filepath.Join(base, "tabelaradar")
+	dir := filepath.Join(base, "tabelharadar")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestLoadRootsConfigFallsBackToLegacyFile(t *testing.T) {
 	write(t, filepath.Join(dir, "config"), `
 # comentário
 /tmp/pessoal
-/tmp/tabeladev
+/tmp/tabelhadev
 !/tmp/pessoal/sigapp
 `)
 
@@ -81,7 +81,7 @@ func TestLoadRootsConfigFallsBackToLegacyFile(t *testing.T) {
 		t.Fatalf("warning = %q, want a migration hint", warn)
 	}
 	roots, excluded := paths(entries)
-	if len(roots) != 2 || roots[0] != "/tmp/pessoal" || roots[1] != "/tmp/tabeladev" {
+	if len(roots) != 2 || roots[0] != "/tmp/pessoal" || roots[1] != "/tmp/tabelhadev" {
 		t.Fatalf("roots = %v, want the 2 legacy roots", roots)
 	}
 	if len(excluded) != 1 || excluded[0] != "/tmp/pessoal/sigapp" {
@@ -178,7 +178,7 @@ func TestExpandHomeAppliedToRoots(t *testing.T) {
 func TestDigestConfigParsesSection(t *testing.T) {
 	dir := configDir(t)
 	write(t, filepath.Join(dir, "config.toml"), `
-roots = ["/tmp/tabeladev"]
+roots = ["/tmp/tabelhadev"]
 
 [digest]
 enabled = true
@@ -204,7 +204,7 @@ since = "7d"
 
 [[digest.boards]]
 board = "geral"
-projects = ["tabelafin", "tabelawebui"]
+projects = ["tabelhafin", "tabelhawebui"]
 
 [[digest.boards]]
 board = "wiv"

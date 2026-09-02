@@ -67,7 +67,7 @@ func (p Project) toIPC() projectJSON {
 	return out
 }
 
-// runIPC implements `tradar ipc <method> [key=value...] --json`, the same
+// runIPC implements `taradar ipc <method> [key=value...] --json`, the same
 // scriptable-data-source convention as dcal/djobs (`<bin> ipc <method>
 // --json`) — meant for an LLM (or any script) to ask "what's left to do,
 // where did I stop, what could I pick up next" across every tracked repo
@@ -75,7 +75,7 @@ func (p Project) toIPC() projectJSON {
 func runIPC(args []string) int {
 	parsed, err := tuiui.ParseIPCArgs(args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "uso: tradar ipc <método> [key=value...] --json")
+		fmt.Fprintln(os.Stderr, "uso: taradar ipc <método> [key=value...] --json")
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
@@ -114,7 +114,7 @@ func ipcProjectsList(projects []Project, filters map[string]string) int {
 	return tuiui.WriteJSON(out)
 }
 
-// ipcProjectsNext returns the single project tabelaradar itself would put first —
+// ipcProjectsNext returns the single project tabelharadar itself would put first —
 // projects come back from scanAll already ordered mid-flight (dirty) work
 // first, then most recently active, the same priority the TUI's sidebar
 // shows top-to-bottom.

@@ -249,9 +249,9 @@ func extractParagraph(content string) string {
 // auto-memory for the project, if this exact path was ever used as a
 // session's cwd — memory lives under ~/.claude/projects/<slug>/memory,
 // where slug is the absolute path with "/" replaced by "-" (Claude Code's
-// own project-directory naming scheme, not something tabelaradar invents). It also
+// own project-directory naming scheme, not something tabelharadar invents). It also
 // pulls out the full body of whichever linked memory file is tagged
-// `type: next-steps` (see the tabelaradar-next-steps-file convention), since that
+// `type: next-steps` (see the tabelharadar-next-steps-file convention), since that
 // one's actual content — not just its one-line hook — is what the ipc
 // subcommand wants to hand an LLM asking "what's left to do here".
 func readMemory(path string) (notes []string, memoryPath, nextSteps string) {

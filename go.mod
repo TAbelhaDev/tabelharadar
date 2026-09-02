@@ -1,4 +1,4 @@
-module github.com/ianptkcs/tabelaradar
+module github.com/TAbelhaDev/tabelharadar
 
 go 1.26.1
 

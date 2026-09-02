@@ -1,5 +1,5 @@
 name: Bug report
-description: Reportar um comportamento incorreto no tabelaradar
+description: Reportar um comportamento incorreto no tabelharadar
 labels: ['bug']
 body:
   - type: textarea
@@ -14,7 +14,7 @@ body:
     attributes:
       label: Passos para reproduzir
       placeholder: |
-        1. Rode 'tabelaradar ...'
+        1. Rode 'tabelharadar ...'
         2. Navegue até '...'
         3. Veja o erro
     validations:
@@ -23,7 +23,7 @@ body:
     id: environment
     attributes:
       label: Ambiente
-      placeholder: SO, terminal/emulador, versão do tabelaradar (ou do Go, se compilado do source)
+      placeholder: SO, terminal/emulador, versão do tabelharadar (ou do Go, se compilado do source)
     validations:
       required: false
   - type: textarea

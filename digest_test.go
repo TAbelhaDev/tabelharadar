@@ -21,7 +21,7 @@ func TestParseDigestPlanPlain(t *testing.T) {
 }
 
 func TestParseDigestPlanFenced(t *testing.T) {
-	raw := "claro! aqui vai:\n```json\n{\"updates\":[{\"board\":\"geral\",\"column\":\"fazendo\",\"title\":\"tabelafin\",\"body\":\"# nova\"}]}\n```\nespero ter ajudado!"
+	raw := "claro! aqui vai:\n```json\n{\"updates\":[{\"board\":\"geral\",\"column\":\"fazendo\",\"title\":\"tabelhafin\",\"body\":\"# nova\"}]}\n```\nespero ter ajudado!"
 	plan, err := parseDigestPlan(raw)
 	if err != nil {
 		t.Fatal(err)

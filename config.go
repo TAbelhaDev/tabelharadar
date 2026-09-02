@@ -18,8 +18,8 @@ type rootEntry struct {
 	Exclude bool
 }
 
-// config is tabelaradar's settings schema, read from
-// ~/.config/tabelaradar/config.toml. Every field falls back to defaultConfig
+// config is tabelharadar's settings schema, read from
+// ~/.config/tabelharadar/config.toml. Every field falls back to defaultConfig
 // when the file leaves it out.
 type config struct {
 	// Roots are the paths to monitor: a repo-group root whose child dirs each
@@ -75,7 +75,7 @@ type digestConfig struct {
 	// StateFile is where the digest keeps its cursor — the last successful
 	// run time, so the next run only gathers what happened since.
 	StateFile string `toml:"state_file"`
-	// KanbanBin is the tabelakanban binary the digest drives. Empty = look it
+	// KanbanBin is the tabelhakanban binary the digest drives. Empty = look it
 	// up on $PATH.
 	KanbanBin string `toml:"kanban_bin"`
 	// WaitForNetwork blocks the start of the run until a probe to github.com
@@ -137,7 +137,7 @@ type digestSources struct {
 }
 
 // digestBoard maps one kanban board to the radar projects that feed it. Board
-// matches the kanban board name (as `tabelakanban ipc boards.list` reports
+// matches the kanban board name (as `tabelhakanban ipc boards.list` reports
 // it); Projects are Project.Name values (the repo basenames the radar scans).
 // The mapping is the radar's own — nothing new lives inside the kanban.
 type digestBoard struct {
@@ -167,7 +167,7 @@ func (d *duration) UnmarshalText(text []byte) error {
 
 func defaultConfig() config {
 	return config{
-		Roots:   []string{tuiui.EnvOr("TABELARADAR_ROOT", filepath.Join(tuiui.HomeDir(), "codigo", "pessoal"))},
+		Roots:   []string{tuiui.EnvOr("TABELHARADAR_ROOT", filepath.Join(tuiui.HomeDir(), "codigo", "pessoal"))},
 		Exclude: nil,
 		Scanner: scannerConfig{
 			DescriptionFiles:  []string{"README.md", "PLANNING.md", "ESCOPO.md", "STACK.md", "TODO.md", "CLAUDE.md"},
@@ -181,7 +181,7 @@ func defaultConfig() config {
 		},
 		General: generalConfig{Editor: ""}, // empty = fall back to $EDITOR, then nvim
 		Digest: digestConfig{
-			StateFile:      filepath.Join(tuiui.HomeDir(), ".local", "state", "tabelaradar", "digest.json"),
+			StateFile:      filepath.Join(tuiui.HomeDir(), ".local", "state", "tabelharadar", "digest.json"),
 			KanbanBin:      "tkanban",
 			WaitForNetwork: true,
 			NetworkTimeout: duration{5 * time.Minute},
@@ -202,17 +202,17 @@ func defaultConfig() config {
 }
 
 // configPath is resolved lazily, not in a package-level var: an init-time var
-// would freeze TABELARADAR_CONFIG/XDG_CONFIG_HOME before main (or a test)
+// would freeze TABELHARADAR_CONFIG/XDG_CONFIG_HOME before main (or a test)
 // could set them.
 func configPath() string {
-	return tuiui.EnvOr("TABELARADAR_CONFIG", tuiui.ConfigPath("tabelaradar", "config.toml"))
+	return tuiui.EnvOr("TABELHARADAR_CONFIG", tuiui.ConfigPath("tabelharadar", "config.toml"))
 }
 
 // legacyConfigPath is the pre-TOML file: one path per line, "!" prefixing an
 // exclusion. Still read when no config.toml exists yet, so an existing
 // install keeps working untouched.
 func legacyConfigPath() string {
-	return tuiui.ConfigPath("tabelaradar", "config")
+	return tuiui.ConfigPath("tabelharadar", "config")
 }
 
 // settings is the normalized snapshot the app reads from.
@@ -280,7 +280,7 @@ func normalize(c config) config {
 // (never an error) — a bad config file must not stop the scan, same contract
 // the old line-based loader had.
 // The Config is built per call rather than kept in a package var: both the
-// path (TABELARADAR_CONFIG) and the defaults (TABELARADAR_ROOT) come from the
+// path (TABELHARADAR_CONFIG) and the defaults (TABELHARADAR_ROOT) come from the
 // environment, and a cached instance would freeze whatever they were on the
 // first call. Nothing is lost — this app re-reads on every rescan anyway and
 // never consults Reload's "changed" flag.
