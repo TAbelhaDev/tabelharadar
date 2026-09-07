@@ -41,6 +41,13 @@ type projectJSON struct {
 	NextSteps string `json:"next_steps,omitempty"`
 }
 
+// groupJSON is the wire format for groups.list — the configured group
+// verbatim, not which of those projects the scan actually found.
+type groupJSON struct {
+	Name     string   `json:"name"`
+	Projects []string `json:"projects"`
+}
+
 func (p Project) toIPC() projectJSON {
 	out := projectJSON{
 		Name:           p.Name,
@@ -81,17 +88,24 @@ func runIPC(args []string) int {
 	}
 
 	entries, cfgWarning := loadRootsConfig()
-	projects, warnings := scanAll(entries)
 	if cfgWarning != "" {
-		warnings = append([]string{cfgWarning}, warnings...)
+		fmt.Fprintln(os.Stderr, "aviso:", cfgWarning)
 	}
+
+	// groups.list is config-only — it never needs the scan (scanAll shells
+	// out to git per project), so it returns before paying for one.
+	if parsed.Method == "groups.list" {
+		return ipcGroupsList(settings.Groups)
+	}
+
+	projects, warnings := scanAll(entries)
 	for _, w := range warnings {
 		fmt.Fprintln(os.Stderr, "aviso:", w)
 	}
 
 	switch parsed.Method {
 	case "projects.list":
-		return ipcProjectsList(projects, parsed.Filters)
+		return ipcProjectsList(projects, settings.Groups, parsed.Filters)
 	case "projects.next":
 		return ipcProjectsNext(projects)
 	case "plugins.list":
@@ -104,7 +118,19 @@ func runIPC(args []string) int {
 	}
 }
 
-func ipcProjectsList(projects []Project, filters map[string]string) int {
+// filterProjects applies the projects.list filters. The second return is a
+// warning for stderr (empty when there's nothing to say).
+func filterProjects(projects []Project, groups []groupConfig, filters map[string]string) ([]projectJSON, string) {
+	var members map[string]bool
+	var warning string
+	if group, ok := filters["group"]; ok {
+		m, found := groupMembers(groups, group)
+		if !found {
+			warning = fmt.Sprintf("grupo %q não existe no config", group)
+		}
+		members = m
+	}
+
 	out := make([]projectJSON, 0, len(projects))
 	for _, p := range projects {
 		if name, ok := filters["name"]; ok && p.Name != name {
@@ -113,7 +139,32 @@ func ipcProjectsList(projects []Project, filters map[string]string) int {
 		if dirty, ok := filters["dirty"]; ok && (p.DirtyCount > 0) != (dirty == "true") {
 			continue
 		}
+		if _, ok := filters["group"]; ok && !members[p.Name] {
+			continue
+		}
 		out = append(out, p.toIPC())
+	}
+	return out, warning
+}
+
+func ipcProjectsList(projects []Project, groups []groupConfig, filters map[string]string) int {
+	out, warning := filterProjects(projects, groups, filters)
+	if warning != "" {
+		fmt.Fprintln(os.Stderr, "aviso:", warning)
+	}
+	return ipc.WriteJSON(out)
+}
+
+// ipcGroupsList prints the configured groups verbatim — it reports the
+// config's mapping, not which of those projects the scan actually found.
+func ipcGroupsList(groups []groupConfig) int {
+	out := make([]groupJSON, 0, len(groups))
+	for _, g := range groups {
+		projects := g.Projects
+		if projects == nil {
+			projects = []string{}
+		}
+		out = append(out, groupJSON{Name: g.Name, Projects: projects})
 	}
 	return ipc.WriteJSON(out)
 }

@@ -27,7 +27,11 @@ type config struct {
 	Roots []string `toml:"roots"`
 	// Exclude hides a path from whatever root it sits under. Order does not
 	// matter — scanAll builds the exclusion set before walking.
-	Exclude []string      `toml:"exclude"`
+	Exclude []string `toml:"exclude"`
+	// Groups name subsets of scanned projects, like boards in a kanban — a
+	// project can belong to several groups, or none. The mapping is the
+	// radar's own; nothing is stored per-repo.
+	Groups  []groupConfig `toml:"groups"`
 	Scanner scannerConfig `toml:"scanner"`
 	Layout  layoutConfig  `toml:"layout"`
 	General generalConfig `toml:"general"`
@@ -62,6 +66,14 @@ type layoutConfig struct {
 type generalConfig struct {
 	// Editor overrides $EDITOR for the "open" key.
 	Editor string `toml:"editor"`
+}
+
+// groupConfig names a subset of scanned project names, like a board in a
+// kanban. Projects are Project.Name values (the repo basenames the radar
+// scans).
+type groupConfig struct {
+	Name     string   `toml:"name"`
+	Projects []string `toml:"projects"`
 }
 
 // digestConfig is the whole `[digest]` section. Enabled defaults to false on
@@ -366,4 +378,21 @@ func rootEntries() []rootEntry {
 func loadRootsConfig() ([]rootEntry, string) {
 	warn := refreshSettings()
 	return rootEntries(), warn
+}
+
+// groupMembers returns the set of project names in the named group, and
+// whether a group with that name is configured at all. A duplicate name
+// resolves to the first match.
+func groupMembers(groups []groupConfig, name string) (map[string]bool, bool) {
+	for _, g := range groups {
+		if g.Name != name {
+			continue
+		}
+		members := make(map[string]bool, len(g.Projects))
+		for _, p := range g.Projects {
+			members[p] = true
+		}
+		return members, true
+	}
+	return nil, false
 }

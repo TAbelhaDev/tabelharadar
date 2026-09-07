@@ -280,6 +280,66 @@ func TestDigestConfigDefaults(t *testing.T) {
 	}
 }
 
+func TestGroupsConfigParsesSection(t *testing.T) {
+	dir := configDir(t)
+	write(t, filepath.Join(dir, "config.toml"), `
+roots = ["/tmp/tabelhadev"]
+
+[[groups]]
+name = "tabeladev"
+projects = ["tabelharadar", "tabelhakanban"]
+
+[[groups]]
+name = "wiv"
+projects = ["oracle"]
+`)
+	if _, warn := loadRootsConfig(); warn != "" {
+		t.Fatalf("warning = %q, want none", warn)
+	}
+
+	if len(settings.Groups) != 2 {
+		t.Fatalf("groups = %+v, want 2", settings.Groups)
+	}
+	if settings.Groups[0].Name != "tabeladev" || len(settings.Groups[0].Projects) != 2 {
+		t.Fatalf("groups[0] = %+v, want tabeladev com 2 projetos", settings.Groups[0])
+	}
+	if settings.Groups[1].Name != "wiv" || len(settings.Groups[1].Projects) != 1 {
+		t.Fatalf("groups[1] = %+v, want wiv com 1 projeto", settings.Groups[1])
+	}
+}
+
+func TestGroupsConfigDefaultsToEmpty(t *testing.T) {
+	configDir(t)
+	if _, warn := loadRootsConfig(); warn != "" {
+		t.Fatalf("warning = %q, want none", warn)
+	}
+	if len(settings.Groups) != 0 {
+		t.Fatalf("groups = %+v, want none by default", settings.Groups)
+	}
+}
+
+func TestGroupMembers(t *testing.T) {
+	groups := []groupConfig{
+		{Name: "tabeladev", Projects: []string{"tabelharadar", "tabelhakanban"}},
+		{Name: "dup", Projects: []string{"first"}},
+		{Name: "dup", Projects: []string{"second"}},
+	}
+
+	members, ok := groupMembers(groups, "tabeladev")
+	if !ok || !members["tabelharadar"] || !members["tabelhakanban"] || members["oracle"] {
+		t.Fatalf("members = %+v, ok = %v, want tabelharadar+tabelhakanban only", members, ok)
+	}
+
+	if _, ok := groupMembers(groups, "does-not-exist"); ok {
+		t.Fatal("ok = true for a group that isn't configured, want false")
+	}
+
+	members, ok = groupMembers(groups, "dup")
+	if !ok || !members["first"] || members["second"] {
+		t.Fatalf("duplicate name = %+v, ok = %v, want the first match to win", members, ok)
+	}
+}
+
 func TestDigestAPIKeyEnvFallsBackPerProvider(t *testing.T) {
 	dir := configDir(t)
 	write(t, filepath.Join(dir, "config.toml"), `[digest.llm]
