@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/ianptkcs/tabelatuiui"
+	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
 // reg is tabelharadar's single source of truth for keybindings: defaults

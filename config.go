@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ianptkcs/tabelatuiui"
+	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
 // rootEntry is one monitored path: a repo, a repo-group root, or (if Exclude)
@@ -36,6 +36,10 @@ type config struct {
 	// it is off by default: no provider, no board mapping, no AI until the
 	// user explicitly opts in.
 	Digest digestConfig `toml:"digest"`
+	// Plugins is the list of explicitly configured plugins. Each entry maps a
+	// binary name to its enabled state. Discovered plugins (taradar-*) that
+	// are not listed here are still visible but default to enabled.
+	Plugins []pluginEntry `toml:"plugins"`
 }
 
 type scannerConfig struct {
@@ -150,6 +154,14 @@ type digestBoard struct {
 type scheduleConfig struct {
 	OnCalendar string `toml:"on_calendar"`
 	Persistent bool   `toml:"persistent"`
+}
+
+// pluginEntry is one explicitly configured plugin in config.toml. Name is
+// the binary name without the "taradar-" prefix (e.g. "digest"). Enabled
+// defaults to true for discovered plugins not listed here.
+type pluginEntry struct {
+	Name    string `toml:"name"`
+	Enabled bool   `toml:"enabled"`
 }
 
 // duration wraps time.Duration so TOML can express it as "2s" instead of a

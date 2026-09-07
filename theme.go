@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ianptkcs/tabelatuiui"
+	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
 // theme mirrors the installed DankMaterialShell's own configured accent

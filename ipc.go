@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ianptkcs/tabelatuiui"
+	"github.com/TAbelhaDev/tabelhascaff/ipc"
 )
 
 // projectJSON is the wire format for the ipc subcommand — the same fields
@@ -73,7 +73,7 @@ func (p Project) toIPC() projectJSON {
 // where did I stop, what could I pick up next" across every tracked repo
 // without going through the TUI.
 func runIPC(args []string) int {
-	parsed, err := tuiui.ParseIPCArgs(args)
+	parsed, err := ipc.ParseIPCArgs(args)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "uso: taradar ipc <método> [key=value...] --json")
 		fmt.Fprintln(os.Stderr, err)
@@ -94,6 +94,10 @@ func runIPC(args []string) int {
 		return ipcProjectsList(projects, parsed.Filters)
 	case "projects.next":
 		return ipcProjectsNext(projects)
+	case "plugins.list":
+		return ipcPluginsList()
+	case "plugins.toggle":
+		return ipcPluginsToggle(parsed.Filters)
 	default:
 		fmt.Fprintf(os.Stderr, "método desconhecido: %q\n", parsed.Method)
 		return 1
@@ -111,7 +115,7 @@ func ipcProjectsList(projects []Project, filters map[string]string) int {
 		}
 		out = append(out, p.toIPC())
 	}
-	return tuiui.WriteJSON(out)
+	return ipc.WriteJSON(out)
 }
 
 // ipcProjectsNext returns the single project tabelharadar itself would put first —
@@ -120,7 +124,46 @@ func ipcProjectsList(projects []Project, filters map[string]string) int {
 // shows top-to-bottom.
 func ipcProjectsNext(projects []Project) int {
 	if len(projects) == 0 {
-		return tuiui.WriteJSON(nil)
+		return ipc.WriteJSON(nil)
 	}
-	return tuiui.WriteJSON(projects[0].toIPC())
+	return ipc.WriteJSON(projects[0].toIPC())
+}
+
+// ipcPluginsList returns all discovered/configured plugins.
+func ipcPluginsList() int {
+	plugins := discoverPlugins()
+	return ipc.WriteJSON(plugins)
+}
+
+// ipcPluginsToggle enables or disables a plugin. Filters: name=, enabled=true/false.
+func ipcPluginsToggle(filters map[string]string) int {
+	name := filters["name"]
+	if name == "" {
+		fmt.Fprintln(os.Stderr, "filtro name= é obrigatório")
+		return 1
+	}
+	enabledStr := filters["enabled"]
+	if enabledStr == "" {
+		fmt.Fprintln(os.Stderr, "filtro enabled= é obrigatório")
+		return 1
+	}
+	enabled := enabledStr == "true"
+
+	// Find and update the plugin in settings.
+	found := false
+	for i, pe := range settings.Plugins {
+		if pe.Name == name {
+			settings.Plugins[i].Enabled = enabled
+			found = true
+			break
+		}
+	}
+	if !found {
+		settings.Plugins = append(settings.Plugins, pluginEntry{Name: name, Enabled: enabled})
+	}
+
+	return ipc.WriteJSON(map[string]any{
+		"name":    name,
+		"enabled": enabled,
+	})
 }

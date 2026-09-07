@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ianptkcs/tabelatuiui"
+	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
 // kanbanBoard mirrors the wire shape `tkanban ipc boards.list --json`
@@ -86,6 +86,8 @@ func runDigest(args []string) int {
 		}
 	}
 
+	entries, cfgWarning := loadRootsConfig()
+
 	cfg := settings.Digest
 	// Enabled is a full kill switch: with it off, the digest does nothing at
 	// all — no scan, no network wait, no LLM, no write.
@@ -94,7 +96,6 @@ func runDigest(args []string) int {
 		return 0
 	}
 
-	entries, cfgWarning := loadRootsConfig()
 	projects, warnings := scanAll(entries)
 	if cfgWarning != "" {
 		fmt.Fprintln(os.Stderr, "aviso:", cfgWarning)

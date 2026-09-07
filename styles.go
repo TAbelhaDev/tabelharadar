@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/ianptkcs/tabelatuiui"
+	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
 // App-specific styles on top of tabelatuiui's shared chrome (called as
