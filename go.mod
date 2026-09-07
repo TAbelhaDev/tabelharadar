@@ -35,4 +35,4 @@ require (
 	golang.org/x/text v0.3.8 // indirect
 )
 
-replace github.com/TAbelhaDev/tabelhascaff => ../tabelhascaff
+replace github.com/TAbelhaDev/tabelhascaff => /home/ianptkcs/codigo/tabelhadev/tabelhascaff
