@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Project groups: a new `[[groups]]` config section names subsets of scanned
+  projects, like boards in a kanban. `taradar ipc projects.list group=X`
+  filters to a group's members, and a new `taradar ipc groups.list` method
+  returns every configured group with its project list.
+
 ### Changed
 
 - Renamed the project from `tabelaradar` (TabelaRadar) to `tabelharadar`

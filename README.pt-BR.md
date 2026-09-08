@@ -108,7 +108,9 @@ cada projeto, o que dá pra começar a implementar" sem abrir a TUI,
 taradar ipc projects.list --json                  # todo projeto trackeado, com status git + descrição + próximos passos
 taradar ipc projects.list dirty=true --json       # só quem tem mudanças não commitadas
 taradar ipc projects.list name=tabelhacal --json   # um projeto específico
+taradar ipc projects.list group=tabeladev --json   # só os projetos do grupo "tabeladev"
 taradar ipc projects.next --json                  # o projeto que o próprio taradar priorizaria (mid-flight > mais recente)
+taradar ipc groups.list --json                    # todo grupo configurado, com sua lista de projetos
 ```
 
 Cada projeto no JSON traz, além dos campos de status git (branch, sujo,
@@ -118,6 +120,15 @@ etc.), `memory_notes` (os hooks de uma linha do índice de memória) e
 memória daquele projeto marcada `type: next-steps` na sua própria
 `~/.claude/projects/<slug>/memory/` — vazio se o projeto ainda não tiver
 uma.
+
+### Grupos
+
+`[[groups]]` nomeia um subconjunto dos projetos escaneados, como um board de
+kanban — um projeto pode estar em vários grupos, ou em nenhum, e o mapeamento
+vive só no `config.toml` (nada é escrito de volta em nenhum repo).
+`projects.list group=X` filtra pros membros daquele grupo; um nome de grupo
+que não bate com nada configurado retorna lista vazia mais um aviso no
+stderr, igual qualquer outro filtro sem correspondência.
 
 ## Digest
 
@@ -190,6 +201,10 @@ sobrescrevem, o resto segue no default. `f5` recarrega sem reiniciar.
 ```toml
 roots = ["~/codigo/pessoal", "~/codigo/tabeladev"]
 exclude = ["~/codigo/pessoal/spotdash"]
+
+[[groups]]              # repita para cada grupo; opcional, nenhum por padrão
+name = "tabeladev"
+projects = ["tabelharadar", "tabelhakanban"]
 
 [scanner]
 description_files = ["README.md", "PLANNING.md", "ESCOPO.md", "STACK.md", "TODO.md", "CLAUDE.md"]

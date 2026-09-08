@@ -107,7 +107,9 @@ non-interactive `ipc` subcommand, in the same spirit as
 taradar ipc projects.list --json                  # every tracked project, with git status + description + next steps
 taradar ipc projects.list dirty=true --json       # only those with uncommitted changes
 taradar ipc projects.list name=tabelhacal --json   # one specific project
+taradar ipc projects.list group=tabeladev --json   # only the projects in the "tabeladev" group
 taradar ipc projects.next --json                  # the project taradar itself would prioritise (mid-flight > most recent)
+taradar ipc groups.list --json                    # every configured group, with its project list
 ```
 
 Beyond the git status fields (branch, dirty, ahead/behind, last commit), each
@@ -116,6 +118,15 @@ project in the JSON carries `description` (extracted from README/PLANNING/etc.),
 **entire** body (not just the truncated hook) of any memory of that project marked
 `type: next-steps` in its own `~/.claude/projects/<slug>/memory/`, empty when the
 project does not have one yet.
+
+### Groups
+
+`[[groups]]` names a subset of scanned projects, like a board in a kanban — a
+project can belong to several groups, or none, and the mapping lives only in
+`config.toml` (nothing is written back into any repo). `projects.list
+group=X` filters to that group's members; a group name that matches nothing
+configured returns an empty list plus a stderr warning, the same as any other
+unmatched filter.
 
 ## Digest
 
@@ -188,6 +199,10 @@ restarting.
 ```toml
 roots = ["~/codigo/pessoal", "~/codigo/tabeladev"]
 exclude = ["~/codigo/pessoal/spotdash"]
+
+[[groups]]              # repeat for each group; optional, none by default
+name = "tabeladev"
+projects = ["tabelharadar", "tabelhakanban"]
 
 [scanner]
 description_files = ["README.md", "PLANNING.md", "ESCOPO.md", "STACK.md", "TODO.md", "CLAUDE.md"]
