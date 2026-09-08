@@ -340,6 +340,54 @@ func TestGroupMembers(t *testing.T) {
 	}
 }
 
+func TestShowAllGroupDefaultsToFalse(t *testing.T) {
+	configDir(t)
+	if _, warn := loadRootsConfig(); warn != "" {
+		t.Fatalf("warning = %q, want none", warn)
+	}
+	if settings.General.ShowAllGroup {
+		t.Fatal("ShowAllGroup = true, want false by default")
+	}
+}
+
+func TestShowAllGroupParsesExplicit(t *testing.T) {
+	dir := configDir(t)
+	write(t, filepath.Join(dir, "config.toml"), "[general]\nshow_all_group = true\n")
+
+	if _, warn := loadRootsConfig(); warn != "" {
+		t.Fatalf("warning = %q, want none", warn)
+	}
+	if !settings.General.ShowAllGroup {
+		t.Fatal("ShowAllGroup = false, want true when set explicitly")
+	}
+}
+
+func TestNormalizeRestoresInvalidGroupsWidthShare(t *testing.T) {
+	got := normalize(config{Layout: layoutConfig{GroupsWidthShare: 0, SidebarWidthShare: 0, RightWidthShare: 0}})
+	if got.Layout.GroupsWidthShare != 1 {
+		t.Fatalf("GroupsWidthShare = %d, want 1", got.Layout.GroupsWidthShare)
+	}
+}
+
+func TestGroupNames(t *testing.T) {
+	groups := []groupConfig{
+		{Name: "tabeladev", Projects: []string{"tabelharadar"}},
+		{Name: "wiv", Projects: []string{"oracle"}},
+		{Name: "tabeladev", Projects: []string{"tabelhakanban"}},
+	}
+
+	names := groupNames(groups)
+	want := []string{"tabeladev", "wiv"}
+	if len(names) != len(want) {
+		t.Fatalf("names = %v, want %v", names, want)
+	}
+	for i := range want {
+		if names[i] != want[i] {
+			t.Fatalf("names = %v, want %v", names, want)
+		}
+	}
+}
+
 func TestDigestAPIKeyEnvFallsBackPerProvider(t *testing.T) {
 	dir := configDir(t)
 	write(t, filepath.Join(dir, "config.toml"), `[digest.llm]

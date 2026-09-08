@@ -91,8 +91,9 @@ taradar list    # dump em texto plano, sem TTY — útil pra scriptar
 taradar digest  # vira atividade recente em updates no kanban (precisa de [digest] no config)
 ```
 
-Dentro da TUI: `↑`/`↓` (ou `j`/`k`) navegam a lista de projetos,
-`ctrl+h`/`ctrl+l` alternam entre o painel de projetos e o de descrição,
+Dentro da TUI: `↑`/`↓` (ou `j`/`k`) navegam a lista focada,
+`ctrl+h`/`ctrl+l` movem o foco um painel pra esquerda/direita (grupos →
+projetos → descrição, quando o painel de grupos aparece — ver Grupos abaixo),
 `j`/`k` (ou `↑`/`↓`) rolam o texto da descrição quando ela está focada,
 `o`/`enter` abre o projeto selecionado no `$EDITOR` (padrão `nvim`), `r`
 reescaneia, `q` sai.
@@ -129,6 +130,16 @@ vive só no `config.toml` (nada é escrito de volta em nenhum repo).
 `projects.list group=X` filtra pros membros daquele grupo; um nome de grupo
 que não bate com nada configurado retorna lista vazia mais um aviso no
 stderr, igual qualquer outro filtro sem correspondência.
+
+Com pelo menos um `[[groups]]` configurado, a TUI ganha um terceiro painel,
+mais à esquerda, listando os grupos. Mover o cursor nele filtra a sidebar de
+projetos ao vivo — sem precisar de `enter`. Um projeto em vários grupos
+aparece em cada um a que pertence, não só no primeiro match. Projetos fora de
+qualquer grupo configurado ficam escondidos por padrão; ligue
+`show_all_group = true` (em `[general]`) pra acrescentar uma entrada "Todos"
+no topo do painel de grupos, mostrando todo projeto, agrupado ou não. Sem
+nenhum `[[groups]]`, esse painel simplesmente não aparece e a TUI fica
+idêntica a antes.
 
 ## Digest
 
@@ -211,13 +222,15 @@ description_files = ["README.md", "PLANNING.md", "ESCOPO.md", "STACK.md", "TODO.
 claude_projects_dir = "~/.claude/projects"
 
 [layout]
-sidebar_width_share = 1  # razão de LARGURA sidebar:coluna-direita
+groups_width_share  = 1  # razão de LARGURA grupos:sidebar:coluna-direita (só importa com [[groups]])
+sidebar_width_share = 1
 right_width_share   = 4
 stats_height_share  = 1  # razão de ALTURA stats:descrição
 desc_height_share   = 4
 
 [general]
-editor = "nvim"  # vazio = usa $EDITOR, depois nvim
+editor = "nvim"          # vazio = usa $EDITOR, depois nvim
+show_all_group = false   # acrescenta uma entrada "Todos" mostrando todo projeto, inclusive sem grupo
 
 # As chaves do digest são todas opcionais; o quadro completo está na seção Digest.
 [digest]

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"sort"
 	"strings"
 	"time"
 
@@ -15,14 +14,17 @@ import (
 	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
-// panelFocus selects which of the two interactive panels — the sidebar
-// project list, or the description panel — currently receives key input:
-// vim-style ctrl+h/l switch between them. The stats panel (top-right) is
-// display-only and never a focus target.
+// panelFocus selects which of the (up to three) interactive panels — the
+// groups sidebar, the projects sidebar, or the description panel — currently
+// receives key input. The constants are declared in spatial left-to-right
+// order: vim-style ctrl+h/l move focus one panel over, in that order, rather
+// than binding to a fixed panel — see focusLeft/focusRight. The stats panel
+// (top-right) is display-only and never a focus target.
 type panelFocus int
 
 const (
-	focusList panelFocus = iota
+	focusGroups panelFocus = iota
+	focusList
 	focusDescription
 )
 
@@ -40,23 +42,57 @@ const (
 	panelGap           = 1
 	minSidebarWidth    = 14
 	minRightWidth      = 30
+	// The groups sidebar's inner width: 10 mirrors the old "Grupo" column
+	// this replaces, 24 keeps a long group name from eating too much of the
+	// row when the groups pane's width share is generous.
+	minGroupsWidth = 10
+	maxGroupsWidth = 24
 )
 
 // The sidebar:right-column width ratio and the stats:description height ratio
 // now live in config.toml ([layout]); normalize keeps every share >= 1 so the
 // divisions below can't hit zero.
 
+// groupEntry is one row of the groups sidebar: either a real configured
+// group by Name, or the pseudo-group "Todos" (All) that shows every project
+// regardless of group membership.
+type groupEntry struct {
+	Name string
+	All  bool
+}
+
 type appModel struct {
 	projects []Project
 	tbl      table.Model
-	focus    panelFocus
+	// gtbl is the groups sidebar — a second, one-column table listing
+	// groupEntries. Only rendered/focusable when showGroupsPane is true.
+	gtbl  table.Model
+	focus panelFocus
 	// detailScroll is the first visible line of the current project's
 	// description panel, adjusted by j/k while focus is on the description.
 	detailScroll int
 
+	groupEntries []groupEntry
+	// selectedGroup/selectedGroupAll track the groups sidebar's selection
+	// across rescans, since gtbl's own rows get rebuilt each time.
+	selectedGroup    string
+	selectedGroupAll bool
+	// visible is exactly the projects rendered in tbl, in row order — the
+	// only thing current() ever indexes into, so a displayed row always
+	// matches the project it points at even after group filtering reorders
+	// or drops entries relative to m.projects.
+	visible []Project
+	// selectedPath tracks the projects sidebar's selection by Project.Path
+	// (stable across rescans/filters; Name can repeat across roots).
+	selectedPath string
+	// showGroupsPane is false whenever no [[groups]] are configured — then
+	// the layout/focus/view all fall back to exactly today's two-panel look.
+	showGroupsPane bool
+
 	width  int
 	height int
 
+	groupsInnerWidth  int
 	sidebarInnerWidth int
 	rightInnerWidth   int
 	statsLines        int
@@ -78,10 +114,18 @@ func newModel() appModel {
 			BindingsFn: reg.Bindings,
 		}),
 		settingsModal: tuiui.NewSettingsModal(reg),
+		focus:         focusList,
 	}
-	m.rescan()
 	m.tbl = table.New(table.WithFocused(true))
+	m.gtbl = table.New(table.WithFocused(true))
+	// Placeholder single columns: bubbles/table's SetRows renders eagerly and
+	// panics (index out of range) if called before SetColumns ever ran. The
+	// real widths come from layout() once the first WindowSizeMsg arrives;
+	// rescan() below calls SetRows before that happens.
+	m.tbl.SetColumns([]table.Column{{Title: "Projeto", Width: minSidebarWidth - 2}})
+	m.gtbl.SetColumns([]table.Column{{Title: "Grupo", Width: minGroupsWidth - 2}})
 	m.applyStyles()
+	m.rescan()
 	return m
 }
 
@@ -93,7 +137,15 @@ func (m *appModel) rescan() {
 	}
 
 	m.projects = projects
+	m.refreshGroups()
+	m.applyGroupFilter()
+
 	m.status = fmt.Sprintf("%d projetos", len(projects))
+	if m.showGroupsPane && !settings.General.ShowAllGroup {
+		if outOfGroup := countOutOfGroup(projects, settings.Groups); outOfGroup > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d fora de grupo (show_all_group)", outOfGroup))
+		}
+	}
 	if len(warnings) > 0 {
 		m.status += " — " + strings.Join(warnings, "; ")
 	}
@@ -116,6 +168,107 @@ func (m *appModel) applyStyles() {
 	// entirely. Leaving Cell transparent lets the panel's own background
 	// (colBase) show through for both normal and selected rows.
 	m.tbl.SetStyles(styles)
+	m.gtbl.SetStyles(styles)
+}
+
+// refreshGroups rebuilds the groups sidebar's entries from settings.Groups —
+// the pseudo-group "Todos" first when show_all_group is on, then every
+// configured group name in config order. It tries to keep the cursor on the
+// same logical selection (by name/All) across a rescan, falling back to the
+// first entry when that selection no longer exists (e.g. a group was
+// removed from config.toml).
+func (m *appModel) refreshGroups() {
+	m.showGroupsPane = len(settings.Groups) > 0
+	if !m.showGroupsPane {
+		m.groupEntries = nil
+		return
+	}
+
+	entries := make([]groupEntry, 0, len(settings.Groups)+1)
+	if settings.General.ShowAllGroup {
+		entries = append(entries, groupEntry{Name: "Todos", All: true})
+	}
+	for _, name := range groupNames(settings.Groups) {
+		entries = append(entries, groupEntry{Name: name})
+	}
+	m.groupEntries = entries
+
+	idx := 0
+	for i, e := range entries {
+		if e.All == m.selectedGroupAll && e.Name == m.selectedGroup {
+			idx = i
+			break
+		}
+	}
+
+	rows := make([]table.Row, len(entries))
+	for i, e := range entries {
+		rows[i] = table.Row{e.Name}
+	}
+	m.gtbl.SetRows(rows)
+	m.gtbl.SetCursor(idx)
+	m.selectedGroup = entries[idx].Name
+	m.selectedGroupAll = entries[idx].All
+}
+
+// applyGroupFilter rebuilds m.visible — the projects sidebar's rows, filtered
+// by whatever group is currently selected — and restores the cursor to
+// selectedPath's row when it's still present. This is the sole place m.visible
+// is written, which is what keeps current()'s indexing honest.
+func (m *appModel) applyGroupFilter() {
+	m.visible = filterByGroup(m.projects, settings.Groups, m.currentGroupEntry())
+	m.tbl.SetRows(projectRows(m.visible))
+
+	idx := 0
+	for i, p := range m.visible {
+		if p.Path == m.selectedPath {
+			idx = i
+			break
+		}
+	}
+	m.tbl.SetCursor(idx)
+
+	prevPath := m.selectedPath
+	if idx < len(m.visible) {
+		m.selectedPath = m.visible[idx].Path
+	} else {
+		m.selectedPath = ""
+	}
+	if m.selectedPath != prevPath {
+		m.detailScroll = 0
+	}
+}
+
+// currentGroupEntry is the groups sidebar's current selection, expressed as
+// the groupEntry filterByGroup expects. With no groups pane at all, it's
+// equivalent to "Todos" — filterByGroup already short-circuits on that.
+func (m appModel) currentGroupEntry() groupEntry {
+	if !m.showGroupsPane {
+		return groupEntry{All: true}
+	}
+	return groupEntry{Name: m.selectedGroup, All: m.selectedGroupAll}
+}
+
+// countOutOfGroup counts scanned projects that belong to no configured group
+// at all — the edge case where turning on [[groups]] without show_all_group
+// silently drops most of the sidebar.
+func countOutOfGroup(projects []Project, groups []groupConfig) int {
+	if len(groups) == 0 {
+		return 0
+	}
+	grouped := make(map[string]bool)
+	for _, g := range groups {
+		for _, name := range g.Projects {
+			grouped[name] = true
+		}
+	}
+	count := 0
+	for _, p := range projects {
+		if !grouped[p.Name] {
+			count++
+		}
+	}
+	return count
 }
 
 func (m appModel) Init() tea.Cmd { return nil }
@@ -181,14 +334,14 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, openEditor(p.Path)
 		}
 		return m, nil
-	// vim-style pane navigation: ctrl+h focuses the project list, ctrl+l
-	// focuses the description panel so j/k scroll its text instead of
-	// moving the list cursor.
+	// vim-style pane navigation: ctrl+h/ctrl+l move focus one panel over, in
+	// spatial left-to-right order (groups, list, description) — not bound to
+	// a fixed panel, since which panels exist depends on showGroupsPane.
 	case key.Matches(keyMsg, resolve("focus-list")):
-		m.focus = focusList
+		m.focusLeft()
 		return m, nil
 	case key.Matches(keyMsg, resolve("focus-desc")):
-		m.focus = focusDescription
+		m.focusRight()
 		return m, nil
 	}
 
@@ -206,28 +359,82 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	if m.focus == focusGroups {
+		return m.forwardToGroups(msg)
+	}
+
 	return m.forwardToTable(msg)
 }
 
-// forwardToTable forwards to the sidebar's table, resetting detailScroll if
-// that moved the cursor to a different project — the old scroll offset
-// otherwise makes no sense against new description text.
+// focusLeft/focusRight move focus one panel over, in left-to-right spatial
+// order (groups, list, description), skipping the groups panel when
+// showGroupsPane is false. Neither wraps at either end.
+func (m *appModel) focusLeft() {
+	switch m.focus {
+	case focusDescription:
+		m.focus = focusList
+	case focusList:
+		if m.showGroupsPane {
+			m.focus = focusGroups
+		}
+	}
+}
+
+func (m *appModel) focusRight() {
+	switch m.focus {
+	case focusGroups:
+		m.focus = focusList
+	case focusList:
+		m.focus = focusDescription
+	}
+}
+
+// forwardToTable forwards to the sidebar's table, resetting detailScroll and
+// updating selectedPath if that moved the cursor to a different project — the
+// old scroll offset otherwise makes no sense against new description text.
 func (m appModel) forwardToTable(msg tea.Msg) (tea.Model, tea.Cmd) {
 	prevIdx := m.tbl.Cursor()
 	var cmd tea.Cmd
 	m.tbl, cmd = m.tbl.Update(msg)
 	if m.tbl.Cursor() != prevIdx {
 		m.detailScroll = 0
+		if p := m.current(); p != nil {
+			m.selectedPath = p.Path
+		} else {
+			m.selectedPath = ""
+		}
 	}
 	return m, cmd
 }
 
+// forwardToGroups forwards to the groups sidebar's table. A cursor move here
+// filters the projects sidebar live, without Enter — moving the group cursor
+// and updating the visible project list are the same user action.
+func (m appModel) forwardToGroups(msg tea.Msg) (tea.Model, tea.Cmd) {
+	prevIdx := m.gtbl.Cursor()
+	var cmd tea.Cmd
+	m.gtbl, cmd = m.gtbl.Update(msg)
+	if idx := m.gtbl.Cursor(); idx != prevIdx {
+		if idx >= 0 && idx < len(m.groupEntries) {
+			e := m.groupEntries[idx]
+			m.selectedGroup = e.Name
+			m.selectedGroupAll = e.All
+		}
+		m.applyGroupFilter()
+		m.detailScroll = 0
+	}
+	return m, cmd
+}
+
+// current indexes m.visible — exactly what generated the sidebar's rows — so
+// row N always corresponds to m.visible[N], regardless of how the group
+// filter reordered or dropped projects relative to m.projects.
 func (m appModel) current() *Project {
 	row := m.tbl.Cursor()
-	if row < 0 || row >= len(m.projects) {
+	if row < 0 || row >= len(m.visible) {
 		return nil
 	}
-	return &m.projects[row]
+	return &m.visible[row]
 }
 
 type editorFinishedMsg struct{}
@@ -260,13 +467,38 @@ func (m *appModel) layout() {
 		return
 	}
 
-	totalRowWidth := m.width - panelGap
-	if minRow := (minSidebarWidth + 4) + (minRightWidth + 4); totalRowWidth < minRow {
-		totalRowWidth = minRow
-	}
-	sidebarBoxWidth := totalRowWidth * settings.Layout.SidebarWidthShare / (settings.Layout.SidebarWidthShare + settings.Layout.RightWidthShare)
-	rightBoxWidth := totalRowWidth - sidebarBoxWidth
+	G, S, R := settings.Layout.GroupsWidthShare, settings.Layout.SidebarWidthShare, settings.Layout.RightWidthShare
 
+	var groupsBoxWidth, sidebarBoxWidth, rightBoxWidth int
+	if m.showGroupsPane {
+		totalRowWidth := m.width - 2*panelGap
+		minRow := (minGroupsWidth + 4) + (minSidebarWidth + 4) + (minRightWidth + 4)
+		if totalRowWidth < minRow {
+			totalRowWidth = minRow
+		}
+		groupsBoxWidth = totalRowWidth * G / (G + S + R)
+		if groupsBoxWidth < minGroupsWidth+4 {
+			groupsBoxWidth = minGroupsWidth + 4
+		}
+		if groupsBoxWidth > maxGroupsWidth+4 {
+			groupsBoxWidth = maxGroupsWidth + 4
+		}
+		remaining := totalRowWidth - groupsBoxWidth
+		sidebarBoxWidth = remaining * S / (S + R)
+		rightBoxWidth = remaining - sidebarBoxWidth
+	} else {
+		totalRowWidth := m.width - panelGap
+		if minRow := (minSidebarWidth + 4) + (minRightWidth + 4); totalRowWidth < minRow {
+			totalRowWidth = minRow
+		}
+		sidebarBoxWidth = totalRowWidth * S / (S + R)
+		rightBoxWidth = totalRowWidth - sidebarBoxWidth
+	}
+
+	m.groupsInnerWidth = groupsBoxWidth - 4
+	if m.groupsInnerWidth < minGroupsWidth {
+		m.groupsInnerWidth = minGroupsWidth
+	}
 	m.sidebarInnerWidth = sidebarBoxWidth - 4
 	if m.sidebarInnerWidth < minSidebarWidth {
 		m.sidebarInnerWidth = minSidebarWidth
@@ -279,25 +511,20 @@ func (m *appModel) layout() {
 	// -2: bubbles/table's default Header/Cell styles each carry their own
 	// Padding(0,1), added on top of the column's Width — the exact off-by-2
 	// this project already hit once before with a 7-column table.
-	hasGroups := len(settings.Groups) > 0
-	if hasGroups {
-		groupColWidth := 10
-		nameColWidth := m.sidebarInnerWidth - groupColWidth - 2
-		if nameColWidth < 1 {
-			nameColWidth = 1
+	if m.showGroupsPane {
+		groupColWidth := m.groupsInnerWidth - 2
+		if groupColWidth < 1 {
+			groupColWidth = 1
 		}
-		m.tbl.SetColumns([]table.Column{
-			{Title: "Grupo", Width: groupColWidth},
-			{Title: "Projeto", Width: nameColWidth},
-		})
-	} else {
-		nameColWidth := m.sidebarInnerWidth - 2
-		if nameColWidth < 1 {
-			nameColWidth = 1
-		}
-		m.tbl.SetColumns([]table.Column{{Title: "Projeto", Width: nameColWidth}})
+		m.gtbl.SetColumns([]table.Column{{Title: "Grupo", Width: groupColWidth}})
+		m.gtbl.SetWidth(m.groupsInnerWidth)
 	}
-	m.tbl.SetRows(sidebarRows(m.projects))
+
+	nameColWidth := m.sidebarInnerWidth - 2
+	if nameColWidth < 1 {
+		nameColWidth = 1
+	}
+	m.tbl.SetColumns([]table.Column{{Title: "Projeto", Width: nameColWidth}})
 	m.tbl.SetWidth(m.sidebarInnerWidth)
 
 	bodyHeight := m.height - headerLines - footerLines
@@ -321,65 +548,48 @@ func (m *appModel) layout() {
 	m.statsLines = statsBoxHeight - statsBoxOverhead
 	m.descMaxLines = descBoxHeight - descBoxOverhead
 
-	// The sidebar spans both right-column boxes stacked together, so its
-	// row budget must match their combined (post-clamp) height exactly or
-	// the borders won't line up at the bottom.
+	// The sidebar (and, when shown, the groups panel) spans both right-column
+	// boxes stacked together, so its row budget must match their combined
+	// (post-clamp) height exactly or the borders won't line up at the bottom.
 	sidebarRowsHeight := (statsBoxHeight + descBoxHeight) - sidebarBoxOverhead
 	if sidebarRowsHeight < minVisibleRows {
 		sidebarRowsHeight = minVisibleRows
 	}
 	m.tbl.SetHeight(sidebarRowsHeight)
+	if m.showGroupsPane {
+		m.gtbl.SetHeight(sidebarRowsHeight)
+	}
 }
 
-func sidebarRows(projects []Project) []table.Row {
-	hasGroups := len(settings.Groups) > 0
-	groupMap := buildGroupMap(settings.Groups)
-
-	// Sort: grouped projects first (by group name, then by project name),
-	// ungrouped projects at the end.
-	sorted := make([]Project, len(projects))
-	copy(sorted, projects)
-	sort.Slice(sorted, func(i, j int) bool {
-		gi, ii := groupMap[sorted[i].Name]
-		gi2, ij := groupMap[sorted[j].Name]
-		switch {
-		case ii && !ij:
-			return true
-		case !ii && ij:
-			return false
-		case ii && ij:
-			if gi != gi2 {
-				return gi < gi2
-			}
-			return sorted[i].Name < sorted[j].Name
-		default:
-			return sorted[i].Name < sorted[j].Name
-		}
-	})
-
-	rows := make([]table.Row, 0, len(sorted))
-	for _, p := range sorted {
-		g := groupMap[p.Name]
-		if hasGroups {
-			rows = append(rows, table.Row{g, fmt.Sprintf("%s %s", statusGlyph(p), p.Name)})
-		} else {
-			rows = append(rows, table.Row{fmt.Sprintf("%s %s", statusGlyph(p), p.Name)})
-		}
+// projectRows renders the projects sidebar's single column: a status glyph
+// plus the project name. Order is whatever the caller passed in — always
+// m.visible, which preserves scanAll's own dirty-first/most-recent priority.
+func projectRows(projects []Project) []table.Row {
+	rows := make([]table.Row, len(projects))
+	for i, p := range projects {
+		rows[i] = table.Row{fmt.Sprintf("%s %s", statusGlyph(p), p.Name)}
 	}
 	return rows
 }
 
-// buildGroupMap returns a map from project name to group name.
-func buildGroupMap(groups []groupConfig) map[string]string {
-	m := make(map[string]string)
-	for _, g := range groups {
-		for _, name := range g.Projects {
-			if _, exists := m[name]; !exists {
-				m[name] = g.Name
-			}
+// filterByGroup returns the subset of projects belonging to group e,
+// preserving projects' original order. e.All (the pseudo-group "Todos"), or
+// no groups configured at all, returns projects unchanged. A project in
+// several [[groups]] simply shows up under each — group membership here is
+// nothing more than "is this project's name in that group's Projects list",
+// so there's no map to keep in sync, and no "first group wins" ambiguity.
+func filterByGroup(projects []Project, groups []groupConfig, e groupEntry) []Project {
+	if e.All || len(groups) == 0 {
+		return projects
+	}
+	members, _ := groupMembers(groups, e.Name)
+	out := make([]Project, 0, len(projects))
+	for _, p := range projects {
+		if members[p.Name] {
+			out = append(out, p)
 		}
 	}
-	return m
+	return out
 }
 
 func statusGlyph(p Project) string {
@@ -476,7 +686,16 @@ func (m appModel) View() string {
 	))
 
 	rightCol := lipgloss.JoinVertical(lipgloss.Left, statsBox, descBox)
-	body := lipgloss.JoinHorizontal(lipgloss.Top, sidebarBox, strings.Repeat(" ", panelGap), rightCol)
+
+	var body string
+	if m.showGroupsPane {
+		groupsBox := theme.Panel(m.focus == focusGroups).Render(padLines(
+			theme.Title().Render("Grupos")+"\n"+m.gtbl.View(), m.groupsInnerWidth,
+		))
+		body = lipgloss.JoinHorizontal(lipgloss.Top, groupsBox, strings.Repeat(" ", panelGap), sidebarBox, strings.Repeat(" ", panelGap), rightCol)
+	} else {
+		body = lipgloss.JoinHorizontal(lipgloss.Top, sidebarBox, strings.Repeat(" ", panelGap), rightCol)
+	}
 
 	view := lipgloss.JoinVertical(lipgloss.Left, header, body, footer)
 	if m.settingsModal.Visible() {
