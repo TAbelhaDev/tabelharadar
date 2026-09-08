@@ -21,8 +21,8 @@ func init() {
 		tuiui.Action{ID: "refresh", Help: "rescan", Keys: []string{"r"}},
 		tuiui.Action{ID: "reload", Help: "recarregar config", Keys: []string{"f5"}},
 		tuiui.Action{ID: "open", Help: "abrir editor", Keys: []string{"o", "enter"}},
-		tuiui.Action{ID: "focus-list", Help: "projetos", Keys: []string{"ctrl+h"}},
-		tuiui.Action{ID: "focus-desc", Help: "descrição", Keys: []string{"ctrl+l"}},
+		tuiui.Action{ID: "focus-list", Help: "painel ←", Keys: []string{"ctrl+h"}},
+		tuiui.Action{ID: "focus-desc", Help: "painel →", Keys: []string{"ctrl+l"}},
 		tuiui.Action{ID: "scroll", Help: "rolar descrição", Keys: []string{"j", "k", "up", "down"}, Label: "j/k"},
 	)
 }

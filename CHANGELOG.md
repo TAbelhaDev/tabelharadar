@@ -13,6 +13,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   projects, like boards in a kanban. `taradar ipc projects.list group=X`
   filters to a group's members, and a new `taradar ipc groups.list` method
   returns every configured group with its project list.
+- TUI: a new leftmost groups sidebar, shown whenever `[[groups]]` is
+  configured. Moving the cursor on it filters the projects sidebar live, no
+  `enter` needed; a project in several groups shows up under each one. A new
+  `show_all_group` key (in `[general]`, off by default) adds a "Todos" entry
+  that shows every project including ones in no configured group. A new
+  `groups_width_share` key (in `[layout]`) sizes the panel. `ctrl+h`/`ctrl+l`
+  now move focus one panel over (groups → projects → description) instead of
+  being bound to a fixed panel.
+
+### Fixed
+
+- TUI: the sidebar cursor and the description/stats panels could point at
+  different projects after a rescan whenever the sidebar's displayed order
+  didn't match `Project` slice order (e.g. the group column's sort). The
+  selection now always indexes the exact list that produced the visible
+  rows.
 
 ### Changed
 

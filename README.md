@@ -90,9 +90,10 @@ taradar list    # plain-text dump, no TTY — useful for scripting
 taradar digest  # turn recent activity into kanban updates (needs [digest] config)
 ```
 
-Inside the TUI: `↑`/`↓` (or `j`/`k`) move through the project list,
-`ctrl+h`/`ctrl+l` switch between the projects panel and the description one,
-`j`/`k` (or `↑`/`↓`) scroll the description text while it is focused, `o`/`enter`
+Inside the TUI: `↑`/`↓` (or `j`/`k`) move through the focused list,
+`ctrl+h`/`ctrl+l` move focus one panel left/right (groups → projects →
+description, when the groups panel is showing — see Groups below), `j`/`k`
+(or `↑`/`↓`) scroll the description text while it is focused, `o`/`enter`
 opens the selected project in `$EDITOR` (`nvim` by default), `r` rescans and `q`
 quits.
 
@@ -127,6 +128,15 @@ project can belong to several groups, or none, and the mapping lives only in
 group=X` filters to that group's members; a group name that matches nothing
 configured returns an empty list plus a stderr warning, the same as any other
 unmatched filter.
+
+With at least one `[[groups]]` configured, the TUI grows a third, leftmost
+panel listing the groups. Moving the cursor there filters the projects
+sidebar live — no `enter` needed. A project in several groups shows up under
+each one it belongs to, not just the first match. Projects in no configured
+group are hidden by default; set `show_all_group = true` (in `[general]`) to
+add a "Todos" entry at the top of the groups panel that shows every project,
+grouped or not. With no `[[groups]]` at all, this panel doesn't render and
+the TUI looks exactly as it did before.
 
 ## Digest
 
@@ -209,13 +219,15 @@ description_files = ["README.md", "PLANNING.md", "ESCOPO.md", "STACK.md", "TODO.
 claude_projects_dir = "~/.claude/projects"
 
 [layout]
-sidebar_width_share = 1  # WIDTH ratio sidebar:right-column
+groups_width_share  = 1  # WIDTH ratio groups:sidebar:right-column (only matters with [[groups]])
+sidebar_width_share = 1
 right_width_share   = 4
 stats_height_share  = 1  # HEIGHT ratio stats:description
 desc_height_share   = 4
 
 [general]
-editor = "nvim"  # empty = use $EDITOR, then nvim
+editor = "nvim"          # empty = use $EDITOR, then nvim
+show_all_group = false   # add a "Todos" entry showing every project, incl. ungrouped ones
 
 # All the digest keys are optional; see the Digest section for the full picture.
 [digest]

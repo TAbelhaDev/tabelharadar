@@ -55,7 +55,10 @@ type scannerConfig struct {
 }
 
 type layoutConfig struct {
-	// Width ratio between the sidebar and the right column, side by side.
+	// Width ratio between the groups sidebar, the projects sidebar and the
+	// right column, side by side. GroupsWidthShare only matters when
+	// [[groups]] is configured — otherwise the groups panel doesn't render.
+	GroupsWidthShare  int `toml:"groups_width_share"`
 	SidebarWidthShare int `toml:"sidebar_width_share"`
 	RightWidthShare   int `toml:"right_width_share"`
 	// Height ratio between stats and description, stacked in the right column.
@@ -66,6 +69,11 @@ type layoutConfig struct {
 type generalConfig struct {
 	// Editor overrides $EDITOR for the "open" key.
 	Editor string `toml:"editor"`
+	// ShowAllGroup adds a pseudo-group "Todos" at the top of the groups
+	// sidebar, showing every project including those in no configured group.
+	// Off by default: with [[groups]] configured, a project in no group is
+	// hidden from the projects sidebar unless this is on.
+	ShowAllGroup bool `toml:"show_all_group"`
 }
 
 // groupConfig names a subset of scanned project names, like a board in a
@@ -198,12 +206,13 @@ func defaultConfig() config {
 			ClaudeProjectsDir: filepath.Join(tuiui.HomeDir(), ".claude", "projects"),
 		},
 		Layout: layoutConfig{
+			GroupsWidthShare:  1,
 			SidebarWidthShare: 1,
 			RightWidthShare:   4,
 			StatsHeightShare:  1,
 			DescHeightShare:   4,
 		},
-		General: generalConfig{Editor: ""}, // empty = fall back to $EDITOR, then nvim
+		General: generalConfig{Editor: "", ShowAllGroup: false}, // empty editor = fall back to $EDITOR, then nvim
 		Digest: digestConfig{
 			StateFile:      filepath.Join(tuiui.HomeDir(), ".local", "state", "tabelharadar", "digest.json"),
 			KanbanBin:      "tkanban",
@@ -246,6 +255,9 @@ var settings = defaultConfig()
 // collapse a panel to nothing and divide by zero in the ratio math.
 func normalize(c config) config {
 	d := defaultConfig()
+	if c.Layout.GroupsWidthShare < 1 {
+		c.Layout.GroupsWidthShare = d.Layout.GroupsWidthShare
+	}
 	if c.Layout.SidebarWidthShare < 1 {
 		c.Layout.SidebarWidthShare = d.Layout.SidebarWidthShare
 	}
@@ -395,4 +407,20 @@ func groupMembers(groups []groupConfig, name string) (map[string]bool, bool) {
 		return members, true
 	}
 	return nil, false
+}
+
+// groupNames returns the configured group names, in config order, deduplicated
+// by first occurrence — the same "first match wins" rule groupMembers already
+// applies to a duplicate name.
+func groupNames(groups []groupConfig) []string {
+	seen := make(map[string]bool, len(groups))
+	names := make([]string, 0, len(groups))
+	for _, g := range groups {
+		if seen[g.Name] {
+			continue
+		}
+		seen[g.Name] = true
+		names = append(names, g.Name)
+	}
+	return names
 }
