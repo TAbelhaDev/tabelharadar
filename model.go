@@ -281,7 +281,7 @@ func (m *appModel) layout() {
 	// this project already hit once before with a 7-column table.
 	hasGroups := len(settings.Groups) > 0
 	if hasGroups {
-		groupColWidth := 14
+		groupColWidth := 10
 		nameColWidth := m.sidebarInnerWidth - groupColWidth - 2
 		if nameColWidth < 1 {
 			nameColWidth = 1
