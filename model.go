@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 
@@ -278,11 +279,24 @@ func (m *appModel) layout() {
 	// -2: bubbles/table's default Header/Cell styles each carry their own
 	// Padding(0,1), added on top of the column's Width — the exact off-by-2
 	// this project already hit once before with a 7-column table.
-	nameColWidth := m.sidebarInnerWidth - 2
-	if nameColWidth < 1 {
-		nameColWidth = 1
+	hasGroups := len(settings.Groups) > 0
+	if hasGroups {
+		groupColWidth := 14
+		nameColWidth := m.sidebarInnerWidth - groupColWidth - 2
+		if nameColWidth < 1 {
+			nameColWidth = 1
+		}
+		m.tbl.SetColumns([]table.Column{
+			{Title: "Grupo", Width: groupColWidth},
+			{Title: "Projeto", Width: nameColWidth},
+		})
+	} else {
+		nameColWidth := m.sidebarInnerWidth - 2
+		if nameColWidth < 1 {
+			nameColWidth = 1
+		}
+		m.tbl.SetColumns([]table.Column{{Title: "Projeto", Width: nameColWidth}})
 	}
-	m.tbl.SetColumns([]table.Column{{Title: "Projeto", Width: nameColWidth}})
 	m.tbl.SetRows(sidebarRows(m.projects))
 	m.tbl.SetWidth(m.sidebarInnerWidth)
 
@@ -318,11 +332,54 @@ func (m *appModel) layout() {
 }
 
 func sidebarRows(projects []Project) []table.Row {
-	rows := make([]table.Row, 0, len(projects))
-	for _, p := range projects {
-		rows = append(rows, table.Row{fmt.Sprintf("%s %s", statusGlyph(p), p.Name)})
+	hasGroups := len(settings.Groups) > 0
+	groupMap := buildGroupMap(settings.Groups)
+
+	// Sort: grouped projects first (by group name, then by project name),
+	// ungrouped projects at the end.
+	sorted := make([]Project, len(projects))
+	copy(sorted, projects)
+	sort.Slice(sorted, func(i, j int) bool {
+		gi, ii := groupMap[sorted[i].Name]
+		gi2, ij := groupMap[sorted[j].Name]
+		switch {
+		case ii && !ij:
+			return true
+		case !ii && ij:
+			return false
+		case ii && ij:
+			if gi != gi2 {
+				return gi < gi2
+			}
+			return sorted[i].Name < sorted[j].Name
+		default:
+			return sorted[i].Name < sorted[j].Name
+		}
+	})
+
+	rows := make([]table.Row, 0, len(sorted))
+	for _, p := range sorted {
+		g := groupMap[p.Name]
+		if hasGroups {
+			rows = append(rows, table.Row{g, fmt.Sprintf("%s %s", statusGlyph(p), p.Name)})
+		} else {
+			rows = append(rows, table.Row{fmt.Sprintf("%s %s", statusGlyph(p), p.Name)})
+		}
 	}
 	return rows
+}
+
+// buildGroupMap returns a map from project name to group name.
+func buildGroupMap(groups []groupConfig) map[string]string {
+	m := make(map[string]string)
+	for _, g := range groups {
+		for _, name := range g.Projects {
+			if _, exists := m[name]; !exists {
+				m[name] = g.Name
+			}
+		}
+	}
+	return m
 }
 
 func statusGlyph(p Project) string {
