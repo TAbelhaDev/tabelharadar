@@ -181,6 +181,14 @@ func (m *appModel) refreshGroups() {
 	m.showGroupsPane = len(settings.Groups) > 0
 	if !m.showGroupsPane {
 		m.groupEntries = nil
+		// The groups panel just disappeared (e.g. the last [[groups]] entry
+		// was removed from config.toml and "r"/F5 re-read it) — if focus was
+		// on it, nothing else would ever move focus off a panel that no
+		// longer renders, leaving both key input and the focus border stuck
+		// on a panel nobody can see.
+		if m.focus == focusGroups {
+			m.focus = focusList
+		}
 		return
 	}
 
