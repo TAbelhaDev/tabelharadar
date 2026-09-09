@@ -3,7 +3,7 @@ module github.com/TAbelhaDev/tabelharadar
 go 1.26.1
 
 require (
-	github.com/TAbelhaDev/tabelhascaff v0.0.0-00010101000000-000000000000
+	github.com/TAbelhaDev/tabelhascaff v0.7.1
 	github.com/TAbelhaDev/tabelhatuiui v0.5.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
@@ -34,5 +34,3 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )
-
-replace github.com/TAbelhaDev/tabelhascaff => /home/ianptkcs/codigo/tabelhadev/tabelhascaff

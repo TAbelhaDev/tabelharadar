@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/TAbelhaDev/tabelhatuiui"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // App-specific styles on top of tabelatuiui's shared chrome (called as

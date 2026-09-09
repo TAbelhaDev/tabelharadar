@@ -1,5 +1,7 @@
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/TAbelhaDev/tabelhascaff v0.7.1 h1:kGdPWSzXumrsbXVD86sBqv6k2sBvmlrYOyu+bCAqt48=
+github.com/TAbelhaDev/tabelhascaff v0.7.1/go.mod h1:Z5nS+n4FGAw6GpdcABwKG8YlMo9+XxxBdFVD29g1eZo=
 github.com/TAbelhaDev/tabelhatuiui v0.5.0 h1:UvJ0DJ7+kSQsZJrMUi6fz7Oetrnp4ITn5+UgbY5XGnU=
 github.com/TAbelhaDev/tabelhatuiui v0.5.0/go.mod h1:jwgN/Vc1FTnPibIIa2gIS5pwppVJnxpy9kTIafyKdro=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TAbelhaDev/tabelhatuiui"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/TAbelhaDev/tabelhatuiui"
 )
 
 // panelFocus selects which of the (up to three) interactive panels — the

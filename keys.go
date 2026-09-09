@@ -3,8 +3,8 @@ package main
 import (
 	"path/filepath"
 
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/TAbelhaDev/tabelhatuiui"
+	"github.com/charmbracelet/bubbles/key"
 )
 
 // reg is tabelharadar's single source of truth for keybindings: defaults
